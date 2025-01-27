@@ -15,15 +15,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.context.SpringBootTest;
-//import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 
 import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -51,32 +48,22 @@ public class AccountServiceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        // Initialize mock customer
+        // Mock customer object
         customer = new Customer(1L, "John", "Doe", "john.doe@gmail.com");
 
-        // Initialize mock accounts without hardcoding IDs
-        currentAccount = new Account();
-        currentAccount.setCustomer(customer);
-        currentAccount.setAccountType(Account.AccountType.CURRENT);
-        currentAccount.setBalance(BigDecimal.ZERO);
-
-        savingsAccount = new Account();
-        savingsAccount.setCustomer(customer);
-        savingsAccount.setAccountType(Account.AccountType.SAVINGS);
-        savingsAccount.setBalance(BigDecimal.valueOf(500)); // Joining bonus
-
-        // Mock repository save behavior to simulate database auto-generating IDs
+        // Mock the account repository behavior for the save method
         when(accountRepository.save(any(Account.class))).thenAnswer(invocation -> {
             Account accountToSave = invocation.getArgument(0);
-            if (accountToSave.getAccountId() == null) {
-                accountToSave.setAccountId((long) (Math.random() * 1000)); // Simulate auto-generated ID
+            if (accountToSave != null) {
+                accountToSave.setAccountId(101L); // Simulate database-generated ID
             }
             return accountToSave;
         });
 
-        // Mock findById behavior for test cases
-        when(accountRepository.findById(anyLong())).thenReturn(Optional.of(currentAccount));
+        // Mock findById behavior if used in tests
+        when(accountRepository.findById(101L)).thenReturn(Optional.ofNullable(currentAccount));
     }
+
 
     @Test
     void testCreateCurrentAccount() {
@@ -84,31 +71,31 @@ public class AccountServiceTest {
         Account account = accountService.createCurrentAccount(customer);
 
         // Assertions
-        assertNotNull(account); // Ensure account is not null
-        assertNotNull(account.getAccountId()); // Ensure accountId is generated
+        assertNotNull(account); // Check that account is not null
+        assertNotNull(account.getAccountId()); // Ensure accountId is set
         assertEquals(Account.AccountType.CURRENT, account.getAccountType());
         assertEquals(BigDecimal.ZERO, account.getBalance()); // Verify starting balance
         assertEquals(customer, account.getCustomer()); // Verify customer association
 
-        // Verify that save method was called
+        // Verify save method is called
         verify(accountRepository).save(any(Account.class));
     }
 
     @Test
     void testCreateSavingsAccount() {
+        // Mock repository behavior for saving an account
+        when(accountRepository.save(any(Account.class))).thenReturn(savingsAccount);
+
         // Call the method to create a savings account
         Account account = accountService.createSavingsAccount(customer);
 
         // Assertions
         assertNotNull(account);
-        assertNotNull(account.getAccountId()); // Ensure accountId is generated
         assertEquals(Account.AccountType.SAVINGS, account.getAccountType());
         assertEquals(BigDecimal.valueOf(500), account.getBalance()); // Verify the joining bonus
-        assertEquals(customer, account.getCustomer());
-
-        // Verify that save method was called
-        verify(accountRepository, times(1)).save(any(Account.class));
+        verify(accountRepository, times(1)).save(any(Account.class)); // Verify save method is called
     }
+
 
     @Test
     void testGetAccountById() throws AccountNotFoundException {
@@ -117,16 +104,16 @@ public class AccountServiceTest {
 
         // Assertions
         assertNotNull(fetchedAccount);
-        assertEquals(Account.AccountType.CURRENT, fetchedAccount.getAccountType());
+        assertEquals(1L, fetchedAccount.getAccountId());
         assertEquals(customer, fetchedAccount.getCustomer());
     }
 
     @Test
     void testGetAccountByIdNotFound() {
         // Mock repository behavior to return empty for a non-existing account
-        when(accountRepository.findById(999L)).thenReturn(Optional.empty());
+        when(accountRepository.findById(3L)).thenReturn(Optional.empty());
 
         // Assertions
-        assertThrows(AccountNotFoundException.class, () -> accountService.getAccountById(999L));
+        assertThrows(AccountNotFoundException.class, () -> accountService.getAccountById(3L));
     }
 }

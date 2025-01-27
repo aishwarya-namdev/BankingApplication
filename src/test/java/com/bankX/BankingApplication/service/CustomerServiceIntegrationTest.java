@@ -1,21 +1,20 @@
 package com.bankX.BankingApplication.service;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import com.bankX.BankingApplication.model.Account;
-import com.bankX.BankingApplication.model.Customer;
-import com.bankX.BankingApplication.repository.CustomerRepository;
-import com.bankX.BankingApplication.repository.AccountRepository;
 import com.bankX.BankingApplication.model.Account.AccountType;
+import com.bankX.BankingApplication.model.Customer;
+import com.bankX.BankingApplication.repository.AccountRepository;
+import com.bankX.BankingApplication.repository.CustomerRepository;
 
 @SpringBootTest
 class CustomerServiceIntegrationTest {
